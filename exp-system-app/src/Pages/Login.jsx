@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import InputField from "../components/InputField";
 import Button from "../components/Button";
 import GoogleLoginButton from "../components/GoogleLogin";
-import "../styles/auth.css";
+//import "../styles/auth.css";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -27,7 +27,7 @@ function Login() {
 
     if (email === storedUser.email && password === storedUser.password) {
       console.log("Login successful!");
-      localStorage.setItem("token", "dummy-token"); 
+      localStorage.setItem("token", "dummy-token");
       navigate("/dashboard");
     } else {
       console.log("Email match:", email === storedUser.email);

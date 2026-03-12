@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/auth.css";
+//import "../styles/auth.css";
 
 function Signup() {
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ function Signup() {
       firstName,
       lastName,
       email,
-      password
+      password,
     };
 
     localStorage.setItem("user", JSON.stringify(userData));
