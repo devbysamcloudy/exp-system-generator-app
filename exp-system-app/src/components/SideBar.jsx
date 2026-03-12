@@ -1,6 +1,5 @@
-import React from "react";
-
-function SideBar({ onSelectSection, activeSection }) { // Add props
+function SideBar({ onSelectSection, activeSection }) {
+  // Add props
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard" },
@@ -8,7 +7,7 @@ function SideBar({ onSelectSection, activeSection }) { // Add props
     { id: "quests", label: "Daily Quests" },
     { id: "tracks", label: "Skill Tracks" },
     { id: "ai", label: "AI Monitoring" },
-    { id: "settings", label: "Settings" }
+    { id: "settings", label: "Settings" },
   ];
 
   const handleClick = (itemId) => {
@@ -22,7 +21,7 @@ function SideBar({ onSelectSection, activeSection }) { // Add props
       <h3>MENU</h3>
       <ul>
         {menuItems.map((item) => (
-          <li 
+          <li
             key={item.id}
             onClick={() => handleClick(item.id)}
             className={activeSection === item.id ? "active" : ""}
