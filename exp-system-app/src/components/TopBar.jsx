@@ -1,6 +1,6 @@
 import React from "react";
 
-function TopBar({userName = "User"}) {
+function TopBar({ userName = "User", toggleTheme, darkMode }) {
 
   return (
     <div className="topbar">
@@ -10,10 +10,12 @@ function TopBar({userName = "User"}) {
       <div className="topbar-right">
         <span className="topbar-user">Hello, {userName}</span>
         <button className="topbar-notify">Notification</button>
+        <button onClick={toggleTheme} className="theme-toggle-btn">
+          {darkMode ? '☀️ Light' : '🌙 Dark'}
+        </button>
       </div>
     </div>
   );
-
 }
 
 export default TopBar;
