@@ -8,23 +8,23 @@ import ProgressBar from "../components/ProgressBar";
 import { getLevel, getProgressPercentage } from "../utilis/xpSystem";
 import { useAuth } from "./Auth/ProtectedRoutes";
 import { useLogout } from "../utilis/authUtils";
+import AIMonitoring from "../components/AIMonitoring";
+
 function Dashboard() {
-  ////////////////////////////////////////
-  //Get user data from auth.
   const { userdata } = useAuth();
 
-  ///////////////////////////////////////////////
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState("dashboard");
   const [userCode, setUserCode] = useState("");
+  const [logs, setLogs] = useState(() => {
+    return JSON.parse(localStorage.getItem("aiLogs")) || [];
+  });
 
-  // Get theme from localStorage or default to light
   const [darkMode, setDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem("theme");
     return savedTheme === "dark";
   });
 
-  // Apply theme class to body and save to localStorage
   useEffect(() => {
     if (darkMode) {
       document.body.classList.add("dark-mode");
@@ -39,63 +39,67 @@ function Dashboard() {
     setDarkMode((prev) => !prev);
   };
 
-  const storedUser = JSON.parse(localStorage.getItem("user"));
-  const userName = storedUser ? storedUser.firstName : "User";
-
   const xp = Number(localStorage.getItem("xp")) || 0;
   const level = getLevel(xp);
   const progress = getProgressPercentage(xp);
-  //////////// my suggesstion is we  use  session instead of local storage. supabase safely stores the sessions.
+
   const logout = useLogout();
-  /////////
+
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("isLoggedIn");
+    logout();
     navigate("/login");
-    console.log("Logged out successfully");
   };
 
   const addXP = (amount) => {
     const currentXP = Number(localStorage.getItem("xp")) || 0;
-    const newXP = currentXP + amount;
-    localStorage.setItem("xp", newXP);
-    window.location.reload();
+    localStorage.setItem("xp", currentXP + amount);
+  };
+
+  const logAction = (feature, success) => {
+    const newLog = {
+      user: userdata?.name || "User",
+      feature,
+      success,
+      timestamp: new Date().toISOString(),
+    };
+    const updatedLogs = [...logs, newLog];
+    setLogs(updatedLogs);
+    localStorage.setItem("aiLogs", JSON.stringify(updatedLogs));
   };
 
   const validateSolution = () => {
     try {
       if (!userCode.includes("function") && !userCode.includes("=>")) {
         alert("Please write a function first!");
+        logAction("Daily Quest", false);
         return;
       }
 
       const testFunction = new Function(`
-                ${userCode}
-                // Try to get the function regardless of its name
-                const functions = Object.values(this).filter(val => typeof val === 'function');
-                const reverseFunc = functions.find(f => f("hello") === "olleh");
-                
-                if (reverseFunc) {
-                    return reverseFunc("hello");
-                }
-                return null;
-            `);
+        ${userCode}
+        const functions = Object.values(this).filter(val => typeof val === 'function');
+        const reverseFunc = functions.find(f => f("hello") === "olleh");
+        if (reverseFunc) {
+          return reverseFunc("hello");
+        }
+        return null;
+      `);
 
       const result = testFunction();
 
       if (result === "olleh") {
         addXP(50);
         alert("Correct solution! +50 XP");
+        logAction("Daily Quest", true);
+        window.location.reload();
       } else {
         alert("Incorrect solution. Try again.");
+        logAction("Daily Quest", false);
       }
     } catch (error) {
       console.error(error);
-      alert(
-        "Your code has an error. Make sure you define a function that reverses a string.",
-      );
+      alert("Your code has an error. Make sure you define a function that reverses a string.");
+      logAction("Daily Quest", false);
     }
   };
 
@@ -126,6 +130,33 @@ function Dashboard() {
             </div>
           </div>
         );
+      case "aiMonitoring":
+        return <AIMonitoring logs={logs} />;
+      case "settings":
+        return (
+          <div className="settings-page">
+            <h2>Settings</h2>
+            <div className="setting-item">
+              <label>Dark Mode</label>
+              <input
+                type="checkbox"
+                checked={darkMode}
+                onChange={toggleTheme}
+              />
+            </div>
+            <div className="setting-item">
+              <label>Reset XP</label>
+              <button
+                onClick={() => {
+                  localStorage.setItem("xp", 0);
+                  window.location.reload();
+                }}
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        );
       case "dashboard":
       default:
         return (
@@ -135,7 +166,6 @@ function Dashboard() {
               <ProgressBar progress={progress} />
               <p>{xp} XP</p>
             </div>
-
             <div className="daily-quest">
               <h2>Daily Coding Quest</h2>
               <p>Create a function that reverses a string.</p>
@@ -144,6 +174,7 @@ function Dashboard() {
                 Complete Quest (+50 XP)
               </button>
             </div>
+            <AIMonitoring logs={logs} />
           </>
         );
     }
@@ -165,13 +196,12 @@ function Dashboard() {
         <div className="dashboard-header">
           <h1>Dashboard</h1>
           <div className="user-greeting">
-            Hello, <span>{userdata.name}</span>!
-            <button onClick={logout} className="logout-btn">
+            Hello, <span>{userdata?.name}</span>!
+            <button onClick={handleLogout} className="logout-btn">
               Logout
             </button>
           </div>
         </div>
-
         {renderContent()}
       </div>
     </div>
