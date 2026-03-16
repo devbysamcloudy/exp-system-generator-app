@@ -5,10 +5,13 @@ import Topbar from "../components/TopBar";
 import "./Dashboard.css";
 import CodeEditor from "../components/CodeEditor";
 import ProgressBar from "../components/ProgressBar";
-import { getLevel, getProgressPercentage } from "../utilis/xpSystem";
+import { getLevel, getProgressPercentage, addXPToStorage } from "../utilis/xpSystem";
 import { useAuth } from "./Auth/ProtectedRoutes";
 import { useLogout } from "../utilis/authUtils";
 import AIMonitoring from "../components/AIMonitoring";
+import DashboardStats from "../components/DashboardStats";
+import GitHubStats from "../components/GitHubStats";
+import QuestGenerator from "../components/QuestGenerator";
 
 function Dashboard() {
   const { userdata } = useAuth();
@@ -19,6 +22,7 @@ function Dashboard() {
   const [logs, setLogs] = useState(() => {
     return JSON.parse(localStorage.getItem("aiLogs")) || [];
   });
+  const [detectedLanguages, setDetectedLanguages] = useState([]);
 
   const [darkMode, setDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem("theme");
@@ -51,8 +55,7 @@ function Dashboard() {
   };
 
   const addXP = (amount) => {
-    const currentXP = Number(localStorage.getItem("xp")) || 0;
-    localStorage.setItem("xp", currentXP + amount);
+    addXPToStorage(amount);
   };
 
   const logAction = (feature, success) => {
@@ -62,9 +65,28 @@ function Dashboard() {
       success,
       timestamp: new Date().toISOString(),
     };
+
     const updatedLogs = [...logs, newLog];
     setLogs(updatedLogs);
     localStorage.setItem("aiLogs", JSON.stringify(updatedLogs));
+
+    fetch("http://127.0.0.1:5001/api/ai-logs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user: newLog.user,
+        feature: newLog.feature,
+        success: newLog.success,
+      }),
+    }).catch((err) => console.error("Failed to send log to backend:", err));
+  };
+
+  const handleQuestAccepted = (quest) => {
+    const reward = quest.xpReward || 50;
+    addXP(reward);
+    logAction(quest.language, true);
+    alert(`Quest accepted! +${reward} XP`);
+    window.location.reload();
   };
 
   const validateSolution = () => {
@@ -123,11 +145,19 @@ function Dashboard() {
             <div className="daily-quest">
               <h3>Daily Coding Quest</h3>
               <p>Create a function that reverses a string.</p>
-              <CodeEditor onCodeChange={setUserCode} />
+              <CodeEditor
+                onCodeChange={setUserCode}
+                darkMode={darkMode}
+              />
               <button className="complete-quest-btn" onClick={validateSolution}>
                 Complete Quest (+50 XP)
               </button>
             </div>
+            <QuestGenerator
+              languages={detectedLanguages}
+              onQuestAccepted={handleQuestAccepted}
+              darkMode={darkMode}
+            />
           </div>
         );
       case "aiMonitoring":
@@ -166,10 +196,20 @@ function Dashboard() {
               <ProgressBar progress={progress} />
               <p>{xp} XP</p>
             </div>
+            <DashboardStats />
+            <GitHubStats onLanguagesDetected={setDetectedLanguages} />
+            <QuestGenerator
+              languages={detectedLanguages}
+              onQuestAccepted={handleQuestAccepted}
+              darkMode={darkMode}
+            />
             <div className="daily-quest">
               <h2>Daily Coding Quest</h2>
               <p>Create a function that reverses a string.</p>
-              <CodeEditor onCodeChange={setUserCode} />
+              <CodeEditor
+                onCodeChange={setUserCode}
+                darkMode={darkMode}
+              />
               <button className="complete-quest-btn" onClick={validateSolution}>
                 Complete Quest (+50 XP)
               </button>

@@ -1,9 +1,30 @@
 import Editor from "@monaco-editor/react";
 import { useState } from "react";
 
-function CodeEditor({ onCodeChange }) {
+const LANGUAGE_MAP = {
+  JavaScript: "javascript",
+  TypeScript: "typescript",
+  Python: "python",
+  Java: "java",
+  CSS: "css",
+  HTML: "html",
+  default: "javascript",
+};
 
-  const [code, setCode] = useState("// Write your solution here");
+const DEFAULT_COMMENTS = {
+  javascript: "// Write your solution here",
+  typescript: "// Write your solution here",
+  python: "# Write your solution here",
+  java: "// Write your solution here",
+  css: "/* Write your solution here */",
+  html: "<!-- Write your solution here -->",
+};
+
+function CodeEditor({ onCodeChange, language = "JavaScript", darkMode }) {
+  const editorLanguage = LANGUAGE_MAP[language] || LANGUAGE_MAP["default"];
+  const defaultComment = DEFAULT_COMMENTS[editorLanguage] || "// Write your solution here";
+
+  const [code, setCode] = useState(defaultComment);
 
   const handleChange = (value) => {
     setCode(value);
@@ -11,12 +32,25 @@ function CodeEditor({ onCodeChange }) {
   };
 
   return (
-    <Editor
-      height="400px"
-      defaultLanguage="javascript"
-      value={code}
-      onChange={handleChange}
-    />
+    <div style={{ borderRadius: "8px", overflow: "hidden", marginTop: "10px" }}>
+      <Editor
+        key={editorLanguage}
+        height="300px"
+        language={editorLanguage}
+        defaultValue={defaultComment}
+        value={code}
+        onChange={handleChange}
+        theme={darkMode ? "vs-dark" : "light"}
+        options={{
+          fontSize: 14,
+          minimap: { enabled: false },
+          scrollBeyondLastLine: false,
+          automaticLayout: true,
+          lineNumbers: "on",
+          wordWrap: "on",
+        }}
+      />
+    </div>
   );
 }
 

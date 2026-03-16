@@ -1,12 +1,15 @@
 import React from "react";
-function ProgressBar({progress}) {
-    return(
+
+function ProgressBar({ progress }) {
+  return (
     <div className="progress-container">
-        <div 
+      <div
         className="progress-bar"
-        style={{width: `${progress}%`}}
-        ></div>
+        style={{ width: `${Math.min(progress, 100)}%` }}
+      ></div>
+      <span className="progress-label">{Math.round(progress)}%</span>
     </div>
-    );
+  );
 }
+
 export default ProgressBar;
