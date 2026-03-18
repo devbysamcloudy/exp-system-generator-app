@@ -16,9 +16,7 @@ import AIMonitoring from "../components/AIMonitoring";
 import DashboardStats from "../components/DashboardStats";
 import GitHubStats from "../components/GitHubStats";
 import QuestGenerator from "../components/QuestGenerator";
-////////////////////////////////////////////////////////////
 import { API_URLS } from "../utilis/apiservices";
-/////////////////////////////////////////////////////////////
 
 function Dashboard() {
   const { userdata } = useAuth();
