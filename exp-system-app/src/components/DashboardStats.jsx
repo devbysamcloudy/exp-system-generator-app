@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { API_URLS } from "../utilis/apiservices";
 
 function DashboardStats() {
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:5001/api/dashboard-stats")
+    fetch(API_URLS.DASHBOARD_STATS)
       .then((res) => res.json())
       .then((data) => setStats(data))
       .catch((err) => console.error("Failed to fetch stats:", err));

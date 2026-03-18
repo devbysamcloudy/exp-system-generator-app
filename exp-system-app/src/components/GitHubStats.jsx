@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { API_URLS } from "../utilis/apiservices";
 
 function GitHubStats({ onLanguagesDetected }) {
   const [username, setUsername] = useState("");
@@ -8,7 +9,7 @@ function GitHubStats({ onLanguagesDetected }) {
   const fetchStats = () => {
     if (!username) return;
     setLoading(true);
-    fetch(`http://127.0.0.1:5001/api/github-stats?username=${username}`)
+    fetch(`${API_URLS.GITHUB_STATS}?username=${username}`)
       .then((res) => res.json())
       .then((data) => {
         setStats(data);

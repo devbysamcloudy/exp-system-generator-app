@@ -1,4 +1,3 @@
-// src/components/AIMonitoring.jsx
 import React from "react";
 
 function AIMonitoring({ logs }) {
@@ -12,7 +11,8 @@ function AIMonitoring({ logs }) {
           {logs.map((log, i) => (
             <li key={i}>
               <strong>{log.user}</strong> used <em>{log.feature}</em>:{" "}
-              {log.success ? "Success" : "Fail"} at {log.time}
+              {log.success ? "Success" : "Fail"} at{" "}
+              {new Date(log.timestamp).toLocaleString()}
             </li>
           ))}
         </ul>
