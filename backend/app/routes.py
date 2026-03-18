@@ -1,18 +1,24 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
 from datetime import datetime
+
 import requests as req
-app = Flask(__name__)
-CORS(app)
+
+
+router = APIRouter()
+
+@router.api_route("/api/", methods=["GET"])
+def home():
+    return "server is working"
 
 ai_logs = []
-@app.route("/api/github-stats", methods = ["GET"])
-@app.route("/api/ai-logs", methods=["GET"])
 
-def github_stats():
+###################################################################################
+@router.get("/api/github-stats")
+def github_stats(request: Request):
     username = request.args.get("username")
     if not username:
-        return jsonify({"error": "Username required"}), 400
+        return JSONResponse({"error": "Username required"}, status_code=400)
     repos_res = req.get(f"https://api.github.com/users/{username}/repos")
     repos = repos_res.json()
 
@@ -23,21 +29,22 @@ def github_stats():
             language_count[lang]= language_count.get(lang, 0) + 1
     top_language = sorted(language_count.items(), key=lambda x: x[1], reverse= True)
 
-    return jsonify({
-        "username" : username,
+    return {
+        "username": username,
         "total_repos": len(repos),
-        "languages": dict(top_language),
-    })
+        "languages": top_language,
+    }
 
+@router.get("/api/ai-logs")
 def get_logs():
-    return jsonify(ai_logs)
+    return ai_logs
 
-@app.route("/api/ai-logs", methods=["POST"])
-def add_log():
-    data = request.json
+@router.post("/api/ai-logs")
+async def add_log(request:Request):
+    data = await request.json()
 
     if not all(k in data for k in ("user", "feature", "success")):
-        return jsonify({"error": "Missing fields"}), 400
+        return JSONResponse({"error": "Missing fields"}, status_code=400)
 
     log_entry = {
         "user": data["user"],
@@ -46,16 +53,14 @@ def add_log():
         "timestamp": datetime.utcnow().isoformat()
     }
     ai_logs.append(log_entry)
-    return jsonify({"message": "Log added", "log": log_entry}), 201
+    return {"message": "Log added", "log": log_entry}
 
-@app.route("/api/dashboard-stats", methods=["GET"])
+@router.get("/api/dashboard-stats")
 def dashboard_stats():
     stats = {
         "total_logs": len(ai_logs),
         "successful": sum(1 for log in ai_logs if log["success"]),
         "failed": sum(1 for log in ai_logs if not log["success"]),
     }
-    return jsonify(stats)
-
-if __name__ == "__main__":
-    app.run(port=5001, debug=True)
+    return stats
+##################################################################

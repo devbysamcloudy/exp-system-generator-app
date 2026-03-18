@@ -5,13 +5,20 @@ import Topbar from "../components/TopBar";
 import "./Dashboard.css";
 import CodeEditor from "../components/CodeEditor";
 import ProgressBar from "../components/ProgressBar";
-import { getLevel, getProgressPercentage, addXPToStorage } from "../utilis/xpSystem";
+import {
+  getLevel,
+  getProgressPercentage,
+  addXPToStorage,
+} from "../utilis/xpSystem";
 import { useAuth } from "./Auth/ProtectedRoutes";
 import { useLogout } from "../utilis/authUtils";
 import AIMonitoring from "../components/AIMonitoring";
 import DashboardStats from "../components/DashboardStats";
 import GitHubStats from "../components/GitHubStats";
 import QuestGenerator from "../components/QuestGenerator";
+////////////////////////////////////////////////////////////
+import { API_URLS } from "../utilis/apiservices";
+/////////////////////////////////////////////////////////////
 
 function Dashboard() {
   const { userdata } = useAuth();
@@ -70,7 +77,7 @@ function Dashboard() {
     setLogs(updatedLogs);
     localStorage.setItem("aiLogs", JSON.stringify(updatedLogs));
 
-    fetch("http://127.0.0.1:5001/api/ai-logs", {
+    fetch(API_URLS.AILOGS, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -120,7 +127,9 @@ function Dashboard() {
       }
     } catch (error) {
       console.error(error);
-      alert("Your code has an error. Make sure you define a function that reverses a string.");
+      alert(
+        "Your code has an error. Make sure you define a function that reverses a string.",
+      );
       logAction("Daily Quest", false);
     }
   };
@@ -145,10 +154,7 @@ function Dashboard() {
             <div className="daily-quest">
               <h3>Daily Coding Quest</h3>
               <p>Create a function that reverses a string.</p>
-              <CodeEditor
-                onCodeChange={setUserCode}
-                darkMode={darkMode}
-              />
+              <CodeEditor onCodeChange={setUserCode} darkMode={darkMode} />
               <button className="complete-quest-btn" onClick={validateSolution}>
                 Complete Quest (+50 XP)
               </button>
@@ -206,10 +212,7 @@ function Dashboard() {
             <div className="daily-quest">
               <h2>Daily Coding Quest</h2>
               <p>Create a function that reverses a string.</p>
-              <CodeEditor
-                onCodeChange={setUserCode}
-                darkMode={darkMode}
-              />
+              <CodeEditor onCodeChange={setUserCode} darkMode={darkMode} />
               <button className="complete-quest-btn" onClick={validateSolution}>
                 Complete Quest (+50 XP)
               </button>
