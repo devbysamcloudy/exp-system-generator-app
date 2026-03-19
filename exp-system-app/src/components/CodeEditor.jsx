@@ -22,7 +22,8 @@ const DEFAULT_COMMENTS = {
 
 function CodeEditor({ onCodeChange, language = "JavaScript", darkMode }) {
   const editorLanguage = LANGUAGE_MAP[language] || LANGUAGE_MAP["default"];
-  const defaultComment = DEFAULT_COMMENTS[editorLanguage] || "// Write your solution here";
+  const defaultComment =
+    DEFAULT_COMMENTS[editorLanguage] || "// Write your solution here";
 
   const [code, setCode] = useState(defaultComment);
 
@@ -32,10 +33,20 @@ function CodeEditor({ onCodeChange, language = "JavaScript", darkMode }) {
   };
 
   return (
-    <div style={{ borderRadius: "8px", overflow: "hidden", marginTop: "10px" }}>
+    <div
+      style={{
+        borderRadius: "8px",
+        overflow: "hidden",
+        marginTop: "10px",
+        border: "1px solid #404040",
+        height: "300px",
+        width: "100%",
+      }}
+    >
       <Editor
         key={editorLanguage}
         height="300px"
+        width="100%"
         language={editorLanguage}
         defaultValue={defaultComment}
         value={code}
@@ -48,6 +59,7 @@ function CodeEditor({ onCodeChange, language = "JavaScript", darkMode }) {
           automaticLayout: true,
           lineNumbers: "on",
           wordWrap: "on",
+          padding: { top: 10 },
         }}
       />
     </div>

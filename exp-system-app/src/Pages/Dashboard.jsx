@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/SideBar";
 import Topbar from "../components/TopBar";
 import "./Dashboard.css";
-import CodeEditor from "../components/CodeEditor";
 import ProgressBar from "../components/ProgressBar";
 import {
   getLevel,
   getProgressPercentage,
   addXPToStorage,
+  addSkillXP,
 } from "../utilis/xpSystem";
 import { useAuth } from "./Auth/ProtectedRoutes";
 import { useLogout } from "../utilis/authUtils";
@@ -17,17 +17,32 @@ import DashboardStats from "../components/DashboardStats";
 import GitHubStats from "../components/GitHubStats";
 import QuestGenerator from "../components/QuestGenerator";
 import { API_URLS } from "../utilis/apiservices";
+import SkillTracks from "../components/SkillTracks";
+import LockModal from "../components/LockModal";
+import DailyQuestCard from "../components/DailyQuestCard";
+import { addNotification, NOTIFICATION_EVENTS } from "../utilis/notificationUtils";
+import {
+  isLocked,
+  getTodayLogs,
+  getRemainingRequests,
+  addConsecutiveQuest,
+  resetConsecutiveQuests,
+  canUnlock,
+} from "../utilis/lockUtilis";
 
 function Dashboard() {
   const { userdata } = useAuth();
-
   const navigate = useNavigate();
+
   const [activeSection, setActiveSection] = useState("dashboard");
-  const [userCode, setUserCode] = useState("");
   const [logs, setLogs] = useState(() => {
     return JSON.parse(localStorage.getItem("aiLogs")) || [];
   });
   const [detectedLanguages, setDetectedLanguages] = useState([]);
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const showLockModal = isLocked(logs) && !isUnlocked;
 
   const [darkMode, setDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem("theme");
@@ -44,9 +59,7 @@ function Dashboard() {
     }
   }, [darkMode]);
 
-  const toggleTheme = () => {
-    setDarkMode((prev) => !prev);
-  };
+  const toggleTheme = () => setDarkMode((prev) => !prev);
 
   const xp = Number(localStorage.getItem("xp")) || 0;
   const level = getLevel(xp);
@@ -60,10 +73,29 @@ function Dashboard() {
   };
 
   const addXP = (amount) => {
-    addXPToStorage(amount);
+    return addXPToStorage(amount);
+  };
+
+  const handleUnlock = () => {
+    if (canUnlock()) {
+      setIsUnlocked(true);
+      resetConsecutiveQuests();
+      addNotification(NOTIFICATION_EVENTS.unlocked());
+    }
+  };
+
+  const handleExit = () => {
+    logout();
+    navigate("/login");
   };
 
   const logAction = (feature, success) => {
+    if (isLocked(logs) && !isUnlocked) {
+      alert("🔒 AI access is locked. Complete 4 quests to unlock.");
+      addNotification(NOTIFICATION_EVENTS.locked());
+      return;
+    }
+
     const newLog = {
       user: userdata?.name || "User",
       feature,
@@ -88,48 +120,41 @@ function Dashboard() {
 
   const handleQuestAccepted = (quest) => {
     const reward = quest.xpReward || 50;
-    addXP(reward);
+    const { leveledUp, newLevel } = addXP(reward);
+    const skillResult = addSkillXP(quest.language, reward);
+
+    addNotification(NOTIFICATION_EVENTS.questComplete(quest.description, reward));
+
+    if (leveledUp) {
+      addNotification(NOTIFICATION_EVENTS.levelUp(newLevel));
+    }
+    if (skillResult.leveledUp) {
+      addNotification(NOTIFICATION_EVENTS.skillLevelUp(quest.language, skillResult.newLevel));
+    }
+
+    addConsecutiveQuest();
     logAction(quest.language, true);
     alert(`Quest accepted! +${reward} XP`);
     window.location.reload();
   };
 
-  const validateSolution = () => {
-    try {
-      if (!userCode.includes("function") && !userCode.includes("=>")) {
-        alert("Please write a function first!");
-        logAction("Daily Quest", false);
-        return;
-      }
+  const handleDailyQuestComplete = (quest) => {
+    const { leveledUp, newLevel } = addXP(quest.reward);
+    const skillResult = addSkillXP(quest.language, quest.reward);
 
-      const testFunction = new Function(`
-        ${userCode}
-        const functions = Object.values(this).filter(val => typeof val === 'function');
-        const reverseFunc = functions.find(f => f("hello") === "olleh");
-        if (reverseFunc) {
-          return reverseFunc("hello");
-        }
-        return null;
-      `);
+    addNotification(NOTIFICATION_EVENTS.questComplete(quest.title, quest.reward));
 
-      const result = testFunction();
-
-      if (result === "olleh") {
-        addXP(50);
-        alert("Correct solution! +50 XP");
-        logAction("Daily Quest", true);
-        window.location.reload();
-      } else {
-        alert("Incorrect solution. Try again.");
-        logAction("Daily Quest", false);
-      }
-    } catch (error) {
-      console.error(error);
-      alert(
-        "Your code has an error. Make sure you define a function that reverses a string.",
-      );
-      logAction("Daily Quest", false);
+    if (leveledUp) {
+      addNotification(NOTIFICATION_EVENTS.levelUp(newLevel));
     }
+    if (skillResult.leveledUp) {
+      addNotification(NOTIFICATION_EVENTS.skillLevelUp(quest.language, skillResult.newLevel));
+    }
+
+    addConsecutiveQuest();
+    logAction(quest.title, true);
+    alert(`Quest complete! +${quest.reward} XP`);
+    window.location.reload();
   };
 
   const renderContent = () => {
@@ -143,20 +168,17 @@ function Dashboard() {
               <ProgressBar progress={progress} />
               <p>{xp} XP</p>
             </div>
+            <SkillTracks />
           </div>
         );
       case "quests":
         return (
           <div className="quests-page">
             <h2>Daily Quests</h2>
-            <div className="daily-quest">
-              <h3>Daily Coding Quest</h3>
-              <p>Create a function that reverses a string.</p>
-              <CodeEditor onCodeChange={setUserCode} darkMode={darkMode} />
-              <button className="complete-quest-btn" onClick={validateSolution}>
-                Complete Quest (+50 XP)
-              </button>
-            </div>
+            <DailyQuestCard
+              darkMode={darkMode}
+              onQuestComplete={handleDailyQuestComplete}
+            />
             <QuestGenerator
               languages={detectedLanguages}
               onQuestAccepted={handleQuestAccepted}
@@ -164,6 +186,8 @@ function Dashboard() {
             />
           </div>
         );
+      case "skillTracks":
+        return <SkillTracks />;
       case "aiMonitoring":
         return <AIMonitoring logs={logs} />;
       case "settings":
@@ -201,20 +225,17 @@ function Dashboard() {
               <p>{xp} XP</p>
             </div>
             <DashboardStats />
+            <DailyQuestCard
+              darkMode={darkMode}
+              onQuestComplete={handleDailyQuestComplete}
+            />
+            <SkillTracks />
             <GitHubStats onLanguagesDetected={setDetectedLanguages} />
             <QuestGenerator
               languages={detectedLanguages}
               onQuestAccepted={handleQuestAccepted}
               darkMode={darkMode}
             />
-            <div className="daily-quest">
-              <h2>Daily Coding Quest</h2>
-              <p>Create a function that reverses a string.</p>
-              <CodeEditor onCodeChange={setUserCode} darkMode={darkMode} />
-              <button className="complete-quest-btn" onClick={validateSolution}>
-                Complete Quest (+50 XP)
-              </button>
-            </div>
             <AIMonitoring logs={logs} />
           </>
         );
@@ -223,15 +244,27 @@ function Dashboard() {
 
   return (
     <div className={`dashboard-container ${darkMode ? "dark" : "light"}`}>
+      {showLockModal && (
+        <LockModal
+          usedRequests={getTodayLogs(logs).length}
+          onUnlock={handleUnlock}
+          onExit={handleExit}
+        />
+      )}
       <Topbar
         userName={userdata?.name}
         toggleTheme={toggleTheme}
         darkMode={darkMode}
+        remainingRequests={getRemainingRequests(logs)}
+        onMenuToggle={() => setSidebarOpen((prev) => !prev)}
       />
       <Sidebar
         onSelectSection={setActiveSection}
         activeSection={activeSection}
         darkMode={darkMode}
+        userdata={userdata}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
       <div className="dashboard-content">
         <div className="dashboard-header">

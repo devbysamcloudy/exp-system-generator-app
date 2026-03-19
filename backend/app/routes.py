@@ -12,7 +12,7 @@ def home():
     return {"message": "server is working"}
 
 @router.get("/api/github-stats")
-def github_stats(username: str = None):  # FastAPI uses query params directly, not request.args
+def github_stats(username: str = None):
     if not username:
         return JSONResponse({"error": "Username required"}, status_code=400)
 
@@ -39,7 +39,7 @@ def github_stats(username: str = None):  # FastAPI uses query params directly, n
         return {
             "username": username,
             "total_repos": len(repos),
-            "languages": dict(top_languages),  # convert to dict not list of tuples
+            "languages": dict(top_languages),
         }
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
@@ -70,4 +70,38 @@ def dashboard_stats():
         "total_logs": len(ai_logs),
         "successful": sum(1 for log in ai_logs if log["success"]),
         "failed": sum(1 for log in ai_logs if not log["success"]),
+    }
+
+@router.get("/api/ai-detection")
+def ai_detection():
+    if not ai_logs:
+        return {"message": "No logs yet", "languages": {}, "most_active": None}
+
+    # Count usage per language/feature
+    language_usage = {}
+    for log in ai_logs:
+        feature = log.get("feature")
+        if feature:
+            language_usage[feature] = language_usage.get(feature, 0) + 1
+
+    # Success rate per language
+    language_success = {}
+    for log in ai_logs:
+        feature = log.get("feature")
+        if feature:
+            if feature not in language_success:
+                language_success[feature] = {"success": 0, "fail": 0}
+            if log["success"]:
+                language_success[feature]["success"] += 1
+            else:
+                language_success[feature]["fail"] += 1
+
+    # Most active language
+    most_active = max(language_usage, key=language_usage.get) if language_usage else None
+
+    return {
+        "languages": language_usage,
+        "success_rates": language_success,
+        "most_active": most_active,
+        "total_logs": len(ai_logs),
     }
