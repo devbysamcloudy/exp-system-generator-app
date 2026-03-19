@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { API_URLS } from "../utilis/apiservices";
+import { addNotification, NOTIFICATION_EVENTS } from "../utilis/notificationUtils";
 
 function GitHubStats({ onLanguagesDetected }) {
   const [username, setUsername] = useState("");
@@ -16,6 +17,7 @@ function GitHubStats({ onLanguagesDetected }) {
         setLoading(false);
         if (onLanguagesDetected) {
           onLanguagesDetected(Object.keys(data.languages));
+          addNotification(NOTIFICATION_EVENTS.githubConnected(username));
         }
       })
       .catch((err) => {
@@ -41,13 +43,17 @@ function GitHubStats({ onLanguagesDetected }) {
 
       {stats && (
         <div className="stats-result">
-          <p>Total Repos: <strong>{stats.total_repos}</strong></p>
+          <p>
+            Total Repos: <strong>{stats.total_repos}</strong>
+          </p>
           <h4>Languages Detected:</h4>
           <div className="language-list">
             {Object.entries(stats.languages).map(([lang, count]) => (
               <div key={lang} className="language-badge">
                 <span>{lang}</span>
-                <small>{count} repo{count > 1 ? "s" : ""}</small>
+                <small>
+                  {count} repo{count > 1 ? "s" : ""}
+                </small>
               </div>
             ))}
           </div>
