@@ -4,6 +4,7 @@ import Sidebar from "../components/SideBar";
 import Topbar from "../components/TopBar";
 import "./Dashboard.css";
 import ProgressBar from "../components/ProgressBar";
+import Reports from "../components/Reports";
 import {
   getLevel,
   getProgressPercentage,
@@ -159,6 +160,8 @@ function Dashboard() {
 
   const renderContent = () => {
     switch (activeSection) {
+      case "reports":
+        return <Reports logs={logs} darkMode={darkMode} />;
       case "xp":
         return (
           <div className="xp-page">
