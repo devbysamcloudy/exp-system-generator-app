@@ -8,6 +8,7 @@ function SideBar({ onSelectSection, activeSection, userdata, isOpen, onClose }) 
     { id: "skillTracks", label: "Skill Tracks", icon: "🎯" },
     { id: "aiMonitoring", label: "AI Monitoring", icon: "🤖" },
     { id: "reports", label: "Reports", icon: "📊" },
+    { id: "auditLogs", label: "Audit Logs", icon: "📜" },
     { id: "settings", label: "Settings", icon: "⚙️" },
   ];
 
