@@ -241,7 +241,7 @@ const BASE_URL = "https://your-production-url.com/api";
 ## 👥 Team
 
 - **Samuel Nganga** — Frontend, AI API Integration, Quest System, Team Lead
-- **Partner** — Backend, FastAPI, Project Architecture
+- **Mark Mulyungi** — Backend, FastAPI, Project Architecture
 
 ---
 
