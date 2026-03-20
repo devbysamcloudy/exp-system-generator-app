@@ -13,12 +13,12 @@ function Settings() {
   const handleProfilePicChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onloadend = () => {
       const base64 = reader.result;
       setProfilePic(base64);
       localStorage.setItem("profilePic", base64);
+      window.location.reload();
     };
     reader.readAsDataURL(file);
   };
@@ -26,6 +26,7 @@ function Settings() {
   const handleRemovePic = () => {
     setProfilePic(null);
     localStorage.removeItem("profilePic");
+    window.location.reload();
   };
 
   const handleSave = () => {
@@ -59,15 +60,17 @@ function Settings() {
             src={profilePic || "https://www.gravatar.com/avatar/?d=mp"}
             alt="Profile"
             className="profile-pic-preview"
-            style={{ width: "100px", height: "100px", borderRadius: "50%", objectFit: "cover" }}
           />
-          <div>
+          <div className="profile-pic-actions">
             <button onClick={() => fileInputRef.current.click()}>
-              Upload Photo
+              📷 Upload Photo
             </button>
             {profilePic && (
-              <button onClick={handleRemovePic} style={{ marginLeft: "8px" }}>
-                Remove Photo
+              <button
+                onClick={handleRemovePic}
+                className="remove-pic-btn"
+              >
+                🗑️ Remove Photo
               </button>
             )}
             <input
@@ -103,8 +106,8 @@ function Settings() {
 
       <div className="preferences-settings">
         <h3>Preferences</h3>
-        <button onClick={toggleTheme}>Toggle Dark/Light Mode</button>
-        <button onClick={handleResetXP}>Reset XP</button>
+        <button onClick={toggleTheme}>🌙 Toggle Dark/Light Mode</button>
+        <button onClick={handleResetXP}>🔄 Reset XP</button>
       </div>
     </div>
   );

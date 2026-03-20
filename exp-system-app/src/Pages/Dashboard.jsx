@@ -5,6 +5,7 @@ import Topbar from "../components/TopBar";
 import "./Dashboard.css";
 import ProgressBar from "../components/ProgressBar";
 import Reports from "../components/Reports";
+import AuditLogs from "../components/AuditLogs";
 import {
   getLevel,
   getProgressPercentage,
@@ -162,6 +163,8 @@ function Dashboard() {
     switch (activeSection) {
       case "reports":
         return <Reports logs={logs} darkMode={darkMode} />;
+      case "auditLogs":
+        return <AuditLogs localLogs={logs} />;  
       case "xp":
         return (
           <div className="xp-page">
